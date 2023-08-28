@@ -2,11 +2,11 @@
 # It is not intended for manual editing.
 
 [metadata]
-groups = ["default"]
+groups = ["default", "testing"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:3ed62451b1d8e9ffd85c7c16aa5712cdb1fa5e52937cab081e4c36ee83e463aa"
+content_hash = "sha256:98344983201a4db8e35e9d6b04ca9959b1fb4cb635603568174d015f020d8f19"
 
 [[package]]
 name = "async-timeout"

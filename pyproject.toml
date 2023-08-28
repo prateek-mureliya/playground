@@ -13,13 +13,12 @@ requires-python = ">=3.7"
 readme = "README.md"
 license = {text = "MIT"}
 
-[tool.pdm.dev-dependencies]
+[project.optional-dependencies]
 testing = [
     "pytest>=7.4.0",
     "pytest-asyncio>=0.21.1",
     "pytest-docker>=2.0.0",
 ]
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
