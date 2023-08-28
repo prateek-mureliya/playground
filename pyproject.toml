@@ -8,14 +8,17 @@ authors = [
 dependencies = [
     "coredis>=4.15.1",
 ]
+
+requires-python = ">=3.7"
+readme = "README.md"
+license = {text = "MIT"}
+
+[tool.pdm.dev-dependencies]
 testing = [
     "pytest>=7.4.0",
     "pytest-asyncio>=0.21.1",
     "pytest-docker>=2.0.0",
 ]
-requires-python = ">=3.7"
-readme = "README.md"
-license = {text = "MIT"}
 
 [build-system]
 requires = ["hatchling"]
