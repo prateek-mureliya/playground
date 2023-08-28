@@ -6,82 +6,47 @@ on:
 
 jobs:
   test:
-    name: Test (Python ${{ matrix.python-version }}, Redis ${{ matrix.redis-version }}${{ matrix.uvloop == 'True' && ', uvloop' || ''}}${{ matrix.orjson == 'True' && ', orjson' || ''}}${{ matrix.extensions == 'True' && ', compiled' || ''}}${{ matrix.label && format(', {0}', matrix.label) || '' }})
-    runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.redis-version == 'next' }}
+    name: test ${{ matrix.os }} / ${{ matrix.python-version }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9, "3.10", "3.11"]
-        redis-version: ["6.0", "7.0", "latest"]
-        test_params: ["-m '(not (keydb or dragonfly))'"]
-        uvloop: ["True", "False"]
-        orjson: ["False"]
-        runtime_type_checks: ["True"]
-        extensions: ["True"]
-        label: [""]
+        os: [ubuntu, macos, windows]
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
         include:
-          - python-version: "3.11"
-            redis-version: "latest"
-            test_params: "-m '(not (keydb or dragonfly))'"
-            runtime_type_checks: "True"
-            extensions: "False"
-          - python-version: "3.11"
-            redis-version: "7.0"
-            test_params: "-m keydb"
-            label: "KeyDB"
-          - python-version: "3.11"
-            redis-version: "7.0"
-            test_params: "-m dragonfly"
-            label: "Dragonfly"
-          - python-version: "pypy-3.9"
-            redis-version: "7.0"
-            test_params: "-m '(not (keydb or dragonfly))' tests/commands tests/test_tracking_cache.py"
-            runtime_type_checks: "False"
-            extensions: "False"
-            uvloop: "False"
-            label: ""
+          # no pydantic-core binaries for pypy on windows, so tests take absolute ages
+          # macos tests with pypy take ages (>10mins) since pypy is very slow
+          # so we only test pypy on ubuntu
+          - os: ubuntu
+            python-version: 'pypy3.7'
+          - os: ubuntu
+            python-version: 'pypy3.8'
+          - os: ubuntu
+            python-version: 'pypy3.9'
+
+    env:
+      PYTHON: ${{ matrix.python-version }}
+      OS: ${{ matrix.os }}
+
+    runs-on: ${{ matrix.os }}-latest
+
     steps:
     - uses: actions/checkout@v3
-    - name: Cache dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('requirements/**') }}
-        restore-keys: |
-          ${{ runner.os }}-${{ matrix.python-version }}-pip-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+
+    - uses: pdm-project/setup-pdm@v3
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+
+    - name: install deps
       run: |
-        python -m pip install --upgrade pip setuptools wheel
-        pip install -r requirements/ci.txt
-        python setup.py build
-    - name: Compile extensions
-      if: ${{ matrix.extensions == 'True' }}
-      run: python setup.py build_ext --inplace --use-mypyc
-    - name: Install uvloop
-      if: ${{ matrix.uvloop == 'True' }}
-      run:
-        pip install uvloop
-    - name: Install orjson
-      if: ${{ matrix.orjson == 'True' }}
-      run:
-        pip install orjson
-    - name: Tests
-      env:
-        COREDIS_UVLOOP: ${{ matrix.uvloop }}
-        HOST_OS: linux
-        CI: "True"
-        COREDIS_REDIS_VERSION: ${{matrix.redis-version}}
-        COREDIS_RUNTIME_CHECKS: ${{matrix.runtime_type_checks}}
-        PYTEST_SENTRY_DSN: ${{ matrix.extensions != 'True' && secrets.SENTRY_DSN || ''}}
-      run: |
-        echo "Runtime checks: $COREDIS_RUNTIME_CHECKS"
-        echo "UVLoop: $COREDIS_UVLOOP"
-        echo "CI: $CI"
-        pytest -q --reverse --reruns 2 --cov=coredis --cov-report=xml ${{ matrix.test_params }}
+        pdm use -f $PYTHON
+        pdm install -G testing
+
+    - run: pdm info && pdm list
+
+    - name: Test
+      # speed up by skipping this step on pypy
+      # if: "!startsWith(matrix.python-version, 'pypy')"
+      run: pdm run -m pytest
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
