@@ -1,0 +1,15 @@
+version: '3.2'
+
+services:
+  redis-basic:
+      image: "redis:${REDIS_VERSION:-latest}"
+      command: redis-server --port 6379 ${DEFAULT_ARGS---enable-debug-command yes} --appendonly yes
+      ports:
+        - '6379:6379'
+  redis-uds:
+    image: "redis:${REDIS_VERSION:-latest}"
+    command: sh -c "test ${HOST_OS} = \"Darwin\" && exit || redis-server --port 0 ${DEFAULT_ARGS---enable-debug-command yes} --appendonly yes --unixsocket /sockets/aiorediantic.redis.sock --unixsocketperm 777"
+    volumes:
+      - type: bind
+        source: /tmp/
+        target: /sockets/
