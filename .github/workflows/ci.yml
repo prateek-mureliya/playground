@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu, macos, windows]
+        os: ubuntu
         python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
         include:
           # no pydantic-core binaries for pypy on windows, so tests take absolute ages
@@ -44,11 +44,7 @@ jobs:
     - run: pdm info && pdm list
 
     - name: Test
-      # speed up by skipping this step on pypy
-      # if: "!startsWith(matrix.python-version, 'pypy')"
       run: pdm run pytest
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

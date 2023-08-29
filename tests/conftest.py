@@ -6,11 +6,6 @@ from pytest_docker.plugin import Services  # pyright: ignore
 
 
 @pytest.fixture(scope="session")
-def docker_compose_command() -> str:
-    return "docker-compose"
-
-
-@pytest.fixture(scope="session")
 def redis_basic_server(docker_ip: str, docker_services: Services):
     port: Any = docker_services.port_for("redis-basic", 6379)  # pyright: ignore
     yield (docker_ip, port)
