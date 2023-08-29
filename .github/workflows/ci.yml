@@ -44,7 +44,7 @@ jobs:
     - run: pdm info && pdm list
 
     - name: Test
-      run: pdm run pytest
+      run: pdm run pytest --cov=playground --cov-report=xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
